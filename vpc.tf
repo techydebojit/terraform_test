@@ -33,7 +33,7 @@ module "label_private_subnet"{
   version    = "0.25.0"
   context    = module.base_label.context
   name       = "subnet"
-  attributes = ["public"]
+  attributes = ["private"]
 }
 
 module "label_igw"{
@@ -41,6 +41,14 @@ module "label_igw"{
   version    = "0.25.0"
   context    = module.base_label.context
   name       = "internet_gateway"
+}
+
+module "label_rt"{
+  source     = "cloudposse/label/null"
+  version    = "0.25.0"
+  context    = module.base_label.context
+  name       = "routetable"
+  attributes = ["public"]
 }
 
 # ====================================================
@@ -78,6 +86,7 @@ resource "aws_subnet" "public" {
   vpc_id = aws_vpc.main.id
   cidr_block = module.subnets.networks[0].cidr_block
   availability_zone = data.aws_availability_zones.azs.names[0]
+  map_public_ip_on_launch = true
   tags = module.label_public_subnet.tags
 }
 
@@ -111,9 +120,7 @@ resource "aws_route_table" "public_rt" {
     cidr_block = "0.0.0.0/0"
     gateway_id = aws_internet_gateway.igw.id
   }
-  tags = {
-    Name = "${module.label_vpc.name}-public-route-table"
-  }
+  tags = module.label_rt.tags
 }
 
 # =================================================
